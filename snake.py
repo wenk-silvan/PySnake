@@ -48,7 +48,7 @@ class Board(QFrame):
         super().__init__()
         self._timer = QBasicTimer()
         self._new_direction = 2
-        self._enemies = [{"x": 0, "y": 0}]
+        self._enemies = []
         self._food = {"x": 0, "y": 0}
         self._snake = None
         self._rand = random.Random()
@@ -56,6 +56,7 @@ class Board(QFrame):
     def init_board(self):
         self.setStyleSheet("background-color:lightgray;")
         self.setFocusPolicy(Qt.StrongFocus)
+        self._enemies = [{"x": 0, "y": 0}]
         self._new_direction = 2
         self._snake = Snake(self.board_size)
         self.spread_food()
@@ -84,6 +85,12 @@ class Board(QFrame):
         block_size = self.pxl_block_size
         painter.fillRect(x * block_size, y * block_size, block_size, block_size, color)
 
+    def enemy_forbidden_place(self, enemy):
+        return ((self._new_direction == 1 or 3) and enemy["y"] == self._snake.head["y"]) \
+               or ((self._new_direction == 2 or 4) and enemy["x"] == self._snake.head["x"]) \
+               or enemy == self._food \
+               or enemy == any(self._enemies)
+
     def keyPressEvent(self, event):
         key = event.key()
         direction = self._snake.direction
@@ -107,7 +114,7 @@ class Board(QFrame):
             while True:
                 enemy["x"] = self._rand.randint(1, self.board_size - 1)
                 enemy["y"] = self._rand.randint(1, self.board_size - 1)
-                if enemy != self._snake.head and enemy != self._food and enemy != any(self._enemies):
+                if not self.enemy_forbidden_place(enemy):
                     break
 
     def stop(self):
