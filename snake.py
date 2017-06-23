@@ -17,6 +17,9 @@ from copy import copy
 
 class Game(QMainWindow):
     def __init__(self):
+        """
+        The initial method of the game. This method creates a new game board and sets the layout of the window.
+        """
         QMainWindow.__init__(self)
 
         self._board = Board(self)
@@ -34,10 +37,18 @@ class Game(QMainWindow):
 
 
 class CollisionError(Exception):
+    """
+    Exception class handling if the snake has a collision.
+    """
     pass
 
 
 class Board(QFrame):
+    """
+    The board class draws the board on which the snake moves. Also the snake itself, food and the enemies.
+    The board is managed with squares which move each time the timer event is called. The size and amount of these
+    squares are also defined in this class. Always if the second food was eaten, there will spawn an additional enemy.
+    """
     msg_status_bar = pyqtSignal(str)
     pxl_block_size = 10
     board_size = 50
@@ -63,6 +74,11 @@ class Board(QFrame):
         self.move_enemies()
 
     def paintEvent(self, event):
+        """
+        The paintEvent is called by the update() function. If the food was eaten since the last timer event,
+        new food will be spreaded and the enemies will be replaced randomly on the board.
+        :param event:
+        """
         painter = QPainter(self)
         self.draw_snake(painter)
 
@@ -82,10 +98,24 @@ class Board(QFrame):
             self.draw_square(painter, part["x"], part["y"], QColor("black"))
 
     def draw_square(self, painter, x, y, color):
+        """
+        Draws a square by the coordinates and the block size configuration.
+        :param painter:
+        :param x:
+        :param y:
+        :param color:
+        :return:
+        """
         block_size = self.pxl_block_size
         painter.fillRect(x * block_size, y * block_size, block_size, block_size, color)
 
     def enemy_forbidden_place(self, enemy):
+        """
+        Return false if enemy has same coords as food or another enemy
+        and if its in the same direction as the snake's head.
+        :param enemy:
+        :return boolean:
+        """
         return ((self._new_direction == 1 or 3) and enemy["y"] == self._snake.head["y"]) \
                or ((self._new_direction == 2 or 4) and enemy["x"] == self._snake.head["x"]) \
                or enemy == self._food \
@@ -132,12 +162,19 @@ class Board(QFrame):
                 break
 
     def start(self):
+        """
+        Starts the timer and initializes the game board.
+        """
         self.msg_status_bar.emit("Welcome to snake! (Press 'q' to quit the game)")
         self.init_board()
         self.playing = True
         self._timer.start(self.speed, self)
 
     def timerEvent(self, event):
+        """
+        Throws exception if snake touched itself, the boarder or an enemy.
+        Otherwise the update() function will be called which repaints the game with new coords.
+        """
         if event.timerId() == self._timer.timerId():
             self._snake.direction = self._new_direction
             try:
@@ -150,6 +187,10 @@ class Board(QFrame):
 
 
 class Snake(object):
+    """
+    The snake class contains the directions of the snake, its length and methods like growing and moving.
+    Also there are the methods which check if the snake didn't collide.
+    """
     directions = {
         1: "Nord",
         2: "East",
@@ -196,6 +237,12 @@ class Snake(object):
             raise CollisionError()
 
     def move(self, food, enemies):
+        """
+        If the snake didn't collide, each part of the snake's body gets the coords of the body part ahead.
+        The x- or y-axis of the snake's head will increment depending on the direction the snake is moving.
+        :param food:
+        :param enemies:
+        """
         self.set_head_position()
 
         self.check_head_touches_border()
